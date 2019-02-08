@@ -52,7 +52,7 @@ program main
        & rf(1:nsmp, 1:ntrc, 1:ncmp), rff(1:nsmp, 1:ntrc, 1:ncmp), &
        & fnames(1:ntrc, 1:ncmp), out_dir, &
        & stack_flag, srf(1:nsmp, 1:ncmp), stack_files(1:ncmp), &
-       & freq_flag)
+       & freq_flag, sp_flag)
   
   write(*,*)"END SUCCESSFULLY"
   
@@ -120,7 +120,7 @@ end subroutine get_file_name
 
 subroutine write_sac(io_unit, ntrc, nsmp, a_gus, delta, tpre, pcnt, &
      & rf, rff, fnames, out_dir, stack_flag, srf, &
-     & stack_files, freq_flag)
+     & stack_files, freq_flag, sp_flag)
   use const
   implicit none 
   integer, intent(in) :: io_unit, ntrc, nsmp
@@ -129,7 +129,7 @@ subroutine write_sac(io_unit, ntrc, nsmp, a_gus, delta, tpre, pcnt, &
   real(8), intent(in) :: a_gus, delta, pcnt, rf(nsmp, ntrc, ncmp)
   real(8), intent(in) :: srf(nsmp, ncmp), tpre
   complex(kind(0d0)), intent(in) :: rff(nsmp, ntrc, ncmp)
-  logical, intent(in) :: stack_flag, freq_flag
+  logical, intent(in) :: stack_flag, freq_flag, sp_flag
   character(clen_max) :: outfile
   integer :: itrc, icmp, ierr, ihdr(158, ntrc, ncmp), i, nf
   
@@ -173,10 +173,22 @@ subroutine write_sac(io_unit, ntrc, nsmp, a_gus, delta, tpre, pcnt, &
         write(io_unit, rec = 45)real(a_gus)
         write(io_unit, rec = 46)real(pcnt)
         write(io_unit, rec = 80)nsmp
-        do i = 1, nsmp
-           write(io_unit, rec = 158 + i)real(rf(i, itrc, icmp))
-        end do
-        close(io_unit)
+        
+        if (.not. sp_flag .or. icmp == it) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(rf(i, itrc, icmp))
+           end do
+        else if (sp_flag .and. icmp == iz) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(rf(i, itrc, ir))
+           end do
+        else if (sp_flag .and. icmp == ir) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(rf(i, itrc, iz))
+           end do
+        end if
+           
+           close(io_unit)
      end do
   end do
   write(*,*)
@@ -208,10 +220,22 @@ subroutine write_sac(io_unit, ntrc, nsmp, a_gus, delta, tpre, pcnt, &
               write(io_unit, rec = 158 + i) &
                    & real(real(rff(i, itrc, icmp)))
            end do
-           do i = 1, nf
-              write(io_unit, rec = 158 + nf + i) &
-                   & real(aimag(rff(i, itrc, icmp)))
-           end do
+           if (icmp == it .or. .not. sp_flag) then
+              do i = 1, nf
+                 write(io_unit, rec = 158 + nf + i) &
+                      & real(aimag(rff(i, itrc, icmp)))
+              end do
+           else if (sp_flag .and. icmp == iz) then
+              do i = 1, nf
+                 write(io_unit, rec = 158 + nf + i) &
+                      & real(aimag(rff(i, itrc, ir)))
+              end do
+           else if(sp_flag .and. icmp == ir) then
+              do i = 1, nf
+                 write(io_unit, rec = 158 + nf + i) &
+                      & real(aimag(rff(i, itrc, iz)))
+              end do
+           end if
            close(io_unit)
         end do
      end do
@@ -237,9 +261,21 @@ subroutine write_sac(io_unit, ntrc, nsmp, a_gus, delta, tpre, pcnt, &
         write(io_unit, rec = 45)real(a_gus)
         write(io_unit, rec = 46)real(pcnt)
         write(io_unit, rec = 80)nsmp
-        do i = 1, nsmp
-           write(io_unit, rec = 158 + i)real(srf(i, icmp))
-        end do
+        if (icmp == it .or. .not. sp_flag) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(srf(i, icmp))
+           end do
+        else if (sp_flag .and. icmp == iz) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(srf(i, ir))
+           end do
+        else if  (sp_flag .and. icmp == ir) then
+           do i = 1, nsmp
+              write(io_unit, rec = 158 + i)real(srf(i, iz))
+           end do
+        end if
+           
+           
         close(io_unit)
      end do
   end if
@@ -343,7 +379,7 @@ subroutine calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, xs, xn, rf, &
            end do
         else
            do i = 1, nsmp
-              j = mod(nsmp + npre - i, nsmp)
+              j = mod(nsmp + npre - i + 1, nsmp)
               if (j == 0) j = nsmp
               rf(i, itrc, icmp) = -xfft(j) / fac_normal
            end do
