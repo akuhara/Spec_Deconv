@@ -40,7 +40,8 @@ program main
   
   call calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, &
        & xs(1:nsmp, 1:ntrc, 1:ncmp), xn(1:nsmp, 1:ntrc, 1:ncmp), &
-       & rf(1:nsmp, 1:ntrc, 1:ncmp), rff(1:nsmp, 1:ntrc, 1:ncmp))
+       & rf(1:nsmp, 1:ntrc, 1:ncmp), rff(1:nsmp, 1:ntrc, 1:ncmp), &
+       & sp_flag)
   
   if (stack_flag) then
      call stack_rf(ntrc, nsmp, rf(1:nsmp, 1:ntrc, 1:ncmp), &
@@ -248,20 +249,22 @@ end subroutine write_sac
 
 !-----------------------------------------------------------------------
 
-subroutine calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, xs, xn, rf, rff)
+subroutine calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, xs, xn, rf, &
+     & rff, sp_flag)
   use const
   implicit none 
   include 'fftw3.f'
   integer, intent(in) :: ntrc, nsmp
   real(8), intent(inout) :: xs(nsmp, ntrc, ncmp), xn(nsmp, ntrc, ncmp)
   real(8), intent(in) :: a_gus, delta, pcnt, tpre
+  logical, intent(in) :: sp_flag
   real(8), intent(out) :: rf(nsmp, ntrc, ncmp)
   complex(kind(0d0)) :: rff(nsmp, ntrc, ncmp), cfft(nsmp)
   complex(kind(0d0)) :: fs(nsmp, ntrc, ncmp)
   complex(kind(0d0)) :: fn(nsmp, ntrc, ncmp)
   real(8) :: xfft(nsmp), gauss(nsmp/2+1)
   integer(8) :: ifft
-  integer :: itrc, icmp, j, npre
+  integer :: itrc, icmp, i, j, npre
   real(8) :: df, fac_normal
   
 
@@ -295,7 +298,7 @@ subroutine calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, xs, xn, rf, rff)
   ! deconvolution
   do icmp = 1, ncmp
      do itrc = 1, ntrc
-        call aw_decon(nsmp, fs(1:nsmp, itrc, icmp), fs(1:nsmp, itrc, iz), &
+        call decon(nsmp, fs(1:nsmp, itrc, icmp), fs(1:nsmp, itrc, iz), &
              & fn(1:nsmp, itrc, icmp), fn(1:nsmp, itrc, iz), &
              & rff(1:nsmp, itrc, icmp))
      end do
@@ -323,26 +326,31 @@ subroutine calc_rf(ntrc, nsmp, a_gus, delta, pcnt, tpre, xs, xn, rf, rff)
   else
      fac_normal = 1.d0
   end if
+  
   call dfftw_plan_dft_c2r_1d(ifft, nsmp, cfft(1:nsmp), &
        & xfft(1:nsmp), FFTW_ESTIMATE)
+  
   do icmp = 1, ncmp
      do itrc = 1, ntrc
         cfft(1:nsmp) = rff(1:nsmp, itrc, icmp)
         call dfftw_execute(ifft)
-        do j = 1, npre
-           rf(j, itrc, icmp) = xfft(nsmp - npre + j) / fac_normal
-        end do
-        do j = npre + 1, nsmp
-           rf(j, itrc, icmp) = xfft(j - npre) / fac_normal
-        end do
-        ! check
-        !if (itrc == 1 .and. icmp == iz) then 
-        !   do j = 1, nsmp
-        !      write(999,*)(j-1) * delta, rf(j, itrc, icmp)
-        !   end do
-        !end if
+        
+        if (.not. sp_flag) then
+           do i = 1, nsmp
+              j = mod(nsmp - npre + i, nsmp)
+              if (j == 0) j = nsmp
+              rf(i, itrc, icmp) = xfft(j) / fac_normal
+           end do
+        else
+           do i = 1, nsmp
+              j = mod(nsmp + npre - i, nsmp)
+              if (j == 0) j = nsmp
+              rf(i, itrc, icmp) = -xfft(j) / fac_normal
+           end do
+        end if
      end do
   end do
+  
   call dfftw_destroy_plan(ifft)
 
   return 
@@ -350,7 +358,7 @@ end subroutine calc_rf
 
 !-----------------------------------------------------------------------
 
-subroutine aw_decon(n, fs_child, fs_parent, fn_child, fn_parent, rff)
+subroutine decon(n, fs_child, fs_parent, fn_child, fn_parent, rff)
   use const
   implicit none 
   integer, intent(in) ::n
@@ -372,7 +380,7 @@ subroutine aw_decon(n, fs_child, fs_parent, fn_child, fn_parent, rff)
   end do
   
   return 
-end subroutine aw_decon
+end subroutine decon
 !-----------------------------------------------------------------------
 
 subroutine cos_taper(x,n,pcnt)
@@ -665,7 +673,7 @@ subroutine get_param(list, a_gus, t0, tlen, pcnt, out_dir, tpre, &
   
   ! Display help message
   if (list == "") then
-     write(0,*) "USAGE: aw_rf [Input SAC file list] " // &
+     write(0,*) "USAGE: spec_deconv [Input SAC file list] " // &
           & "(a=<Gaussian parameter> " // &
           & "t=<Onset time> l=<Time window length> " // &
           & "p=<fraction of cos taper> o=<Output directory> "// &
