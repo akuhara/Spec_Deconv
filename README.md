@@ -4,13 +4,13 @@ Receiver function calculation through spectral division with damping factor
 
 ## Requirements
 
-* Fortran compilar
+* Fortran compiler
 
 * FFTW library
 
 ## Install
 
-Type `make` in the root directory. You may need to edit `Makefile` in accordance with the compilar you use and the path to the FFTW library.
+Type `make` in the root directory. You may need to edit `Makefile` in accordance with the compiler you use and the path to the FFTW library.
 
 ## Synopsis
 
@@ -29,8 +29,9 @@ Type `make` in the root directory. You may need to edit `Makefile` in accordance
 
 ### Option flags
  
-|:---:|:---:|:---:|
+
 |Flag | function | default value |
+|:---:|:---:|:---:|
 | a | parameter for Gaussian low-pass filter|  1.0 |
 | t | Timing of P onset in sec. (relative to SAC header B)| 200.0 |
 | l | Length of signal in sec. | 50.0 |
