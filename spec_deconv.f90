@@ -671,7 +671,8 @@ subroutine get_param(list, a_gus, t0, tlen, pcnt, out_dir, tpre, &
   list    = ""
   stack_flag = .false.
   sp_flag = .false.
-  
+  freq_flag = .false.
+ 
   ! read from arguments
   narg = iargc()
   do iarg = 1, narg

@@ -1,7 +1,7 @@
 FC       = gfortran 
 FCFLAGS  = -Wall -pedantic -std=f95 -fbounds-check -O \
 	-Wuninitialized -ffpe-trap=invalid,zero,overflow -fbacktrace \
-	-fall-intrinsics
+	-fall-intrinsics -g
 FFTW     = -I/usr/local/include -lfftw3
 BINDIR   = ./bin
 TARGET   = $(BINDIR)/spec_deconv
