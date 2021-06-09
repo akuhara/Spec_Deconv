@@ -52,8 +52,13 @@ Type `make` in the root directory. You may need to edit `Makefile` in accordance
 
 
 ### Examples
-* `bin/spec_deconv z_file_list a=2.5 t=200 l=50 p=0.05`
+`bin/spec_deconv z_file_list a=2.5 t=200 l=50 p=0.05`
 
+* Signal time window starting from t=200 to 250 s.
+
+* Pre-event time window starting from t=150 to 200 s.
+
+* 2.5-s portion at each end is tapered.  
 
 ### Outputs 
 
