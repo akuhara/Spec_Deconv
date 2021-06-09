@@ -2,6 +2,8 @@
 
 Receiver function estimation by spectral division with freqeuncy-dependent damping
 
+![equation](./img/equation.png)
+
 ## Requirements
 
 * Fortran compiler
@@ -12,6 +14,10 @@ Receiver function estimation by spectral division with freqeuncy-dependent dampi
 
 Type `make` in the root directory. You may need to edit `Makefile` in accordance with the compiler you use and the path to the FFTW library.
 
+### Tips
+
+* For Intel compiler, a option flag, -assume byterecl, is mandatory.
+
 ## Synopsis
 
 `bin/spec_devonv Input_SAC_file_list (option flag)`
@@ -20,7 +26,7 @@ Type `make` in the root directory. You may need to edit `Makefile` in accordance
 
 ### Format of Input SAC file list
 
-* A Filename of Z component records for each line
+* A Filename of Z component record for each line
 
 * The Z component filename must be appended by ".z".
 
