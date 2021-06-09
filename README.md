@@ -1,6 +1,6 @@
 # Spec_Deconv
 
-Receiver function calculation through spectral division with damping factor
+Receiver function estimation by spectral division with freqeuncy-dependent damping
 
 ## Requirements
 
