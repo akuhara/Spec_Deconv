@@ -32,6 +32,8 @@ Type `make` in the root directory. You may need to edit `Makefile` in accordance
 
 * R and Z component filenames must be appended by ".r" and ".t", respectively (if aaa.z appears in the list, then both aaa.r and aaa.t must exist).
 
+* A sample is [here](./sample/list).
+
 
 ### Option flags
  
